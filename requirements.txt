@@ -1,0 +1,5 @@
+pandas
+dynaconf
+psycopg
+psycopg[binary, pool]
+SQLAlchemy

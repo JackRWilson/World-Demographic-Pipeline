@@ -6,3 +6,7 @@
 
 # Plan
 plan.md
+
+# ETL
+.env
+/etl/__pycache__
