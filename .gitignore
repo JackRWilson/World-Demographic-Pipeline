@@ -1,0 +1,8 @@
+# Venv
+.venv/
+
+# Data
+/data/
+
+# Plan
+plan.md
