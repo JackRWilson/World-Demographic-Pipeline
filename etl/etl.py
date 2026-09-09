@@ -209,6 +209,13 @@ class LoadDemographics(Loader):
         return demo_ids.drop(columns=["country_id"])
 
 
+class LoadAge(Loader):
+    def load(self, df):
+        table_name = "age"
+        self._insert(df, table_name)
+        return self._read_ids(table_name, ["age_id", "age_range"])
+
+
 class ETLProcessor:
     def __init__(self, cnx, data_path):
         self._cnx = cnx
@@ -249,5 +256,7 @@ class ETLProcessor:
             demographics, country_table
         )
         print(demographics_table.head())
+        age_table = LoadAge(self._cnx).load(age)
+        print(age_table.head())
 
         print("Complete.")
