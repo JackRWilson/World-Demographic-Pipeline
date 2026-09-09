@@ -4,6 +4,7 @@ set search_path to world_demographics;
 
 create table country (
 	country_id varchar(50) primary key,
+	country_code char(2) not null,
     country_name varchar(100) not null,
     area_km2 int null
 );
@@ -20,8 +21,8 @@ create table demographics (
 	net_migration_rate numeric(10,2) null,
 	rate_natural_increase numeric(10,2) null,
 	le_at_birth numeric(10,2) null,
-	female_le_birth numeric(10,2) null,
-	male_le_birth numeric(10,2) null,
+	female_le_at_birth numeric(10,2) null,
+	male_le_at_birth numeric(10,2) null,
 	country_id varchar(50) not null
 		references country(country_id)
 );
