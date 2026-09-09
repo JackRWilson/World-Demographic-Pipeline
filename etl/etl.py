@@ -164,6 +164,51 @@ class TransformAgeDemographic:
         ).drop(columns=["id"])
 
 
+class Loader:
+    def __init__(self, cnx):
+        self._cnx = cnx
+
+    def _insert(self, df, table_name):
+        df.to_sql(table_name, self._cnx, if_exists="append", index=False)
+        self._cnx.commit()
+
+    def _read_ids(self, table_name, cols):
+        sql_cols = (", ").join(cols)
+        qry = f"select {sql_cols} from {table_name};"
+        return pd.read_sql(qry, self._cnx)
+
+    def _join_fk(self, df, id_table, on):
+        merged_df = df.merge(id_table, on=on, how="left")
+        for col in id_table.columns:
+            if "id" in col:
+                id_col = col
+        missing = merged_df[id_col].isna().sum()
+        if missing > 0:
+            raise ValueError(
+                f"{missing} rows in {on} failed to match with a foreign key."
+            )
+        return merged_df.drop(columns=[on])
+
+
+class LoadCountry(Loader):
+    def load(self, df):
+        table_name = "country"
+        self._insert(df, table_name)
+        return self._read_ids(table_name, ["country_id", "country_code"])
+
+
+class LoadDemographics(Loader):
+    def load(self, df, country_table):
+        table_name = "demographics"
+        df = self._join_fk(df, id_table=country_table, on="country_code")
+        self._insert(df, table_name)
+
+        # Collect demo ids cols for merging to age_demographic table
+        demo_ids = self._read_ids(table_name, ["demo_id", "year", "country_id"])
+        demo_ids = demo_ids.merge(country_table, on="country_id", how="left")
+        return demo_ids.drop(columns=["country_id"])
+
+
 class ETLProcessor:
     def __init__(self, cnx, data_path):
         self._cnx = cnx
@@ -171,6 +216,17 @@ class ETLProcessor:
 
     def _extract_demographics(self):
         return pd.read_csv(self._data_path, delimiter="|")
+
+    def _load_country(self, df):
+        df.to_sql("country", self._cnx, if_exists="append", index=False)
+        self._cnx.commit()
+        qry = "select country_id, country_code from country;"
+        return pd.read_sql(qry, self._cnx)
+
+    def _join_demographic_fk(self, demographics, country_table):
+        demographics = demographics.merge(country_table, on="country_code", how="left")
+        demographics = demographics.drop(columns=["country_code"])
+        return demographics
 
     def process(self):
         print("Extract...")
@@ -182,12 +238,16 @@ class ETLProcessor:
         demographics = TransformDemographics().transform(df)
         age = TransformAge().transform()
         age_demographic = TransformAgeDemographic().transform(df)
-        print(age_demographic.head())
         print(f"Country table shape: {country.shape}")
         print(f"Demographics table shape: {demographics.shape}")
         print(f"Age table shape: {age.shape}")
-        print(f"Age_Demographic table shape: {age_demographic.shape}")
+        print(f"Age_Demographic table shape: {age_demographic.shape}\n")
 
-        # print("Load...")
+        print("Load...")
+        country_table = LoadCountry(self._cnx).load(country)
+        demographics_table = LoadDemographics(self._cnx).load(
+            demographics, country_table
+        )
+        print(demographics_table.head())
 
         print("Complete.")
