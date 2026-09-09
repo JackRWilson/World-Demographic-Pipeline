@@ -19,6 +19,11 @@ age_cols = [
 ]
 
 
+class ExtractDemographicData:
+    def extract(self, data_path):
+        return pd.read_csv(data_path, delimiter="|")
+
+
 class TransformCountry:
     def transform(self, df):
         df = self._map_country_names(df)
@@ -234,12 +239,9 @@ class ETLProcessor:
         self._cnx = cnx
         self._data_path = data_path
 
-    def _extract_demographics(self):
-        return pd.read_csv(self._data_path, delimiter="|")
-
     def process(self):
         print("Extract...")
-        df = self._extract_demographics()
+        df = ExtractDemographicData().extract(self._data_path)
         print(f"Raw data shape: {df.shape}\n")
 
         print("Transform...")
