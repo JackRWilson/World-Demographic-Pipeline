@@ -39,6 +39,6 @@ create table age_demographic (
 	age_id int unique
 		references age(age_id),
 	births int null,
-	fertility_rate int null
+	fertility_rate numeric(10,2) null
 
 );
