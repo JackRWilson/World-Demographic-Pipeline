@@ -9,6 +9,11 @@ create table country (
     area_km2 int null
 );
 
+create table age (
+	age_id serial primary key,
+	age_range varchar(25) not null
+);
+
 create table demographics (
 	demo_id serial primary key,
 	year int not null,
@@ -25,11 +30,6 @@ create table demographics (
 	male_le_at_birth numeric(10,2) null,
 	country_id int not null
 		references country(country_id)
-);
-
-create table age (
-	age_id serial primary key,
-	age_range varchar(25) not null
 );
 
 create table age_demographic (

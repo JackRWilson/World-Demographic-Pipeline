@@ -53,6 +53,23 @@ class TransformCountry:
         return df
 
 
+class TransformAge:
+    def transform(self):
+        return pd.DataFrame(
+            {
+                "age_range": [
+                    "15-19",
+                    "20-24",
+                    "25-29",
+                    "30-34",
+                    "35-39",
+                    "40-44",
+                    "45-49",
+                ]
+            }
+        )
+
+
 class TransformDemographics:
     def transform(self, df):
         df = self._map_country_code(df)
@@ -113,23 +130,6 @@ class TransformDemographics:
         for col in int64_cols:
             df[col] = df[col].astype("Int64")
         return df
-
-
-class TransformAge:
-    def transform(self):
-        return pd.DataFrame(
-            {
-                "age_range": [
-                    "15-19",
-                    "20-24",
-                    "25-29",
-                    "30-34",
-                    "35-39",
-                    "40-44",
-                    "45-49",
-                ]
-            }
-        )
 
 
 class TransformAgeDemographic:
@@ -207,6 +207,13 @@ class LoadCountry(Loader):
         return self._read_ids(table_name, ["country_id", "country_code"])
 
 
+class LoadAge(Loader):
+    def load(self, df):
+        table_name = "age"
+        self._insert(df, table_name)
+        return self._read_ids(table_name, ["age_id", "age_range"])
+
+
 class LoadDemographics(Loader):
     def load(self, df, country_table):
         table_name = "demographics"
@@ -217,13 +224,6 @@ class LoadDemographics(Loader):
         demo_ids = self._read_ids(table_name, ["demo_id", "year", "country_id"])
         demo_ids = demo_ids.merge(country_table, on="country_id", how="left")
         return demo_ids.drop(columns=["country_id"])
-
-
-class LoadAge(Loader):
-    def load(self, df):
-        table_name = "age"
-        self._insert(df, table_name)
-        return self._read_ids(table_name, ["age_id", "age_range"])
 
 
 class LoadAgeDemographic(Loader):
@@ -246,26 +246,30 @@ class ETLProcessor:
 
         print("Transform...")
         country = TransformCountry().transform(df)
-        demographics = TransformDemographics().transform(df)
         age = TransformAge().transform()
+        demographics = TransformDemographics().transform(df)
         age_demographic = TransformAgeDemographic().transform(df)
         print(f"Country table shape: {country.shape}")
-        print(f"Demographics table shape: {demographics.shape}")
         print(f"Age table shape: {age.shape}")
+        print(f"Demographics table shape: {demographics.shape}")
         print(f"Age_Demographic table shape: {age_demographic.shape}\n")
 
         print("Load...")
-        country_table = LoadCountry(self._cnx).load(country)
+        load_country = LoadCountry(self._cnx)
+        load_age = LoadAge(self._cnx)
+        load_demographics = LoadDemographics(self._cnx)
+        load_age_demographic = LoadAgeDemographic(self._cnx)
+
+        country_table = load_country.load(country)
         print("Country table complete.")
-        demographics_table = LoadDemographics(self._cnx).load(
-            demographics, country_table
-        )
-        print("Demographics table complete.")
-        age_table = LoadAge(self._cnx).load(age)
+
+        age_table = load_age.load(age)
         print("Age table complete.")
-        LoadAgeDemographic(self._cnx).load(
-            age_demographic, demographics_table, age_table
-        )
+
+        demographics_table = load_demographics.load(demographics, country_table)
+        print("Demographics table complete.")
+
+        load_age_demographic.load(age_demographic, demographics_table, age_table)
         print("Age_Demographic table complete.")
 
-        print("Complete.")
+        print("\nComplete.")
