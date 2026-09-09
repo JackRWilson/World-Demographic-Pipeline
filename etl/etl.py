@@ -93,6 +93,23 @@ class TransformDemographics:
         return df
 
 
+class TransformAge:
+    def transform(self):
+        return pd.DataFrame(
+            {
+                "age_range": [
+                    "15-19",
+                    "20-24",
+                    "25-29",
+                    "30-34",
+                    "35-39",
+                    "40-44",
+                    "45-49",
+                ]
+            }
+        )
+
+
 class ETLProcessor:
     def __init__(self, cnx, data_path):
         self._cnx = cnx
@@ -104,15 +121,16 @@ class ETLProcessor:
     def process(self):
         print("Extract...")
         df = self._extract_demographics()
-        # print(df.head())
         print(f"Raw data shape: {df.shape}\n")
 
         print("Transform...")
         country = TransformCountry().transform(df)
         demographics = TransformDemographics().transform(df)
-        print(demographics.head())
+        age = TransformAge().transform()
+        print(age.head())
         print(f"Country table shape: {country.shape}")
         print(f"Demographics table shape: {demographics.shape}")
+        print(f"Age table shape: {age.shape}")
 
         # print("Load...")
 
