@@ -19,6 +19,11 @@ age_cols = [
 ]
 
 
+class ExtractDemographicData:
+    def extract(self, data_path):
+        return pd.read_csv(data_path, delimiter="|")
+
+
 class TransformCountry:
     def transform(self, df):
         df = self._map_country_names(df)
@@ -46,6 +51,23 @@ class TransformCountry:
     def _correct_data_types(self, df):
         df["area_km2"] = df["area_km2"].astype("Int64")
         return df
+
+
+class TransformAge:
+    def transform(self):
+        return pd.DataFrame(
+            {
+                "age_range": [
+                    "15-19",
+                    "20-24",
+                    "25-29",
+                    "30-34",
+                    "35-39",
+                    "40-44",
+                    "45-49",
+                ]
+            }
+        )
 
 
 class TransformDemographics:
@@ -110,29 +132,13 @@ class TransformDemographics:
         return df
 
 
-class TransformAge:
-    def transform(self):
-        return pd.DataFrame(
-            {
-                "age_range": [
-                    "15-19",
-                    "20-24",
-                    "25-29",
-                    "30-34",
-                    "35-39",
-                    "40-44",
-                    "45-49",
-                ]
-            }
-        )
-
-
 class TransformAgeDemographic:
     def transform(self, df):
         df = self._map_country_code(df)
         df = self._drop_extra_cols(df)
         df = self._drop_na_rows(df)
         df = self._convert_wide_to_long(df)
+        df = self._hyphenate_age_range(df)
         df = self._rename_cols(df)
         return df
 
@@ -158,10 +164,74 @@ class TransformAgeDemographic:
             suffix=r"\d+_\d+",
         ).reset_index()
 
+    def _hyphenate_age_range(self, df):
+        df["age_range"] = df["age_range"].str.replace("_", "-")
+        return df
+
     def _rename_cols(self, df):
         return df.rename(
             columns={"#YR": "year", "BIRTHS": "births", "ASFR": "fertility_rate"}
         ).drop(columns=["id"])
+
+
+class Loader:
+    def __init__(self, cnx):
+        self._cnx = cnx
+
+    def _insert(self, df, table_name):
+        df.to_sql(table_name, self._cnx, if_exists="append", index=False)
+        self._cnx.commit()
+
+    def _read_ids(self, table_name, cols):
+        sql_cols = (", ").join(cols)
+        qry = f"select {sql_cols} from {table_name};"
+        return pd.read_sql(qry, self._cnx)
+
+    def _join_fk(self, df, id_table, on: list):
+        merged_df = df.merge(id_table, on=on, how="left")
+        for col in id_table.columns:
+            if "id" in col:
+                id_col = col
+        missing = merged_df[id_col].isna().sum()
+        if missing > 0:
+            raise ValueError(
+                f"{missing} rows in {on} failed to match with a foreign key."
+            )
+        return merged_df.drop(columns=[col for col in on])
+
+
+class LoadCountry(Loader):
+    def load(self, df):
+        table_name = "country"
+        self._insert(df, table_name)
+        return self._read_ids(table_name, ["country_id", "country_code"])
+
+
+class LoadAge(Loader):
+    def load(self, df):
+        table_name = "age"
+        self._insert(df, table_name)
+        return self._read_ids(table_name, ["age_id", "age_range"])
+
+
+class LoadDemographics(Loader):
+    def load(self, df, country_table):
+        table_name = "demographics"
+        df = self._join_fk(df, id_table=country_table, on=["country_code"])
+        self._insert(df, table_name)
+
+        # Collect demo ids cols for merging to age_demographic table
+        demo_ids = self._read_ids(table_name, ["demo_id", "year", "country_id"])
+        demo_ids = demo_ids.merge(country_table, on="country_id", how="left")
+        return demo_ids.drop(columns=["country_id"])
+
+
+class LoadAgeDemographic(Loader):
+    def load(self, df, demographics_table, age_table):
+        table_name = "age_demographic"
+        df = self._join_fk(df, id_table=demographics_table, on=["year", "country_code"])
+        df = self._join_fk(df, id_table=age_table, on=["age_range"])
+        self._insert(df, table_name)
 
 
 class ETLProcessor:
@@ -169,25 +239,37 @@ class ETLProcessor:
         self._cnx = cnx
         self._data_path = data_path
 
-    def _extract_demographics(self):
-        return pd.read_csv(self._data_path, delimiter="|")
-
     def process(self):
         print("Extract...")
-        df = self._extract_demographics()
+        df = ExtractDemographicData().extract(self._data_path)
         print(f"Raw data shape: {df.shape}\n")
 
         print("Transform...")
         country = TransformCountry().transform(df)
-        demographics = TransformDemographics().transform(df)
         age = TransformAge().transform()
+        demographics = TransformDemographics().transform(df)
         age_demographic = TransformAgeDemographic().transform(df)
-        print(age_demographic.head())
         print(f"Country table shape: {country.shape}")
-        print(f"Demographics table shape: {demographics.shape}")
         print(f"Age table shape: {age.shape}")
-        print(f"Age_Demographic table shape: {age_demographic.shape}")
+        print(f"Demographics table shape: {demographics.shape}")
+        print(f"Age_Demographic table shape: {age_demographic.shape}\n")
 
-        # print("Load...")
+        print("Load...")
+        load_country = LoadCountry(self._cnx)
+        load_age = LoadAge(self._cnx)
+        load_demographics = LoadDemographics(self._cnx)
+        load_age_demographic = LoadAgeDemographic(self._cnx)
 
-        print("Complete.")
+        country_table = load_country.load(country)
+        print("Country table complete.")
+
+        age_table = load_age.load(age)
+        print("Age table complete.")
+
+        demographics_table = load_demographics.load(demographics, country_table)
+        print("Demographics table complete.")
+
+        load_age_demographic.load(age_demographic, demographics_table, age_table)
+        print("Age_Demographic table complete.")
+
+        print("\nComplete.")
