@@ -6,3 +6,8 @@
 
 # Plan
 plan.md
+testing.ipynb
+
+# ETL
+.env
+/etl/__pycache__
