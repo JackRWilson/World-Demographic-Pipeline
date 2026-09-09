@@ -34,11 +34,11 @@ create table age (
 
 create table age_demographic (
 	demographic_age_id serial primary key,
-	demo_id int unique
+	demo_id int not null
 		references demographics(demo_id),
-	age_id int unique
+	age_id int not null
 		references age(age_id),
 	births int null,
-	fertility_rate numeric(10,2) null
-
+	fertility_rate numeric(10,2) null,
+	unique (demo_id, age_id)
 );

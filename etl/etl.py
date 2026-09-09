@@ -133,6 +133,7 @@ class TransformAgeDemographic:
         df = self._drop_extra_cols(df)
         df = self._drop_na_rows(df)
         df = self._convert_wide_to_long(df)
+        df = self._hyphenate_age_range(df)
         df = self._rename_cols(df)
         return df
 
@@ -158,6 +159,10 @@ class TransformAgeDemographic:
             suffix=r"\d+_\d+",
         ).reset_index()
 
+    def _hyphenate_age_range(self, df):
+        df["age_range"] = df["age_range"].str.replace("_", "-")
+        return df
+
     def _rename_cols(self, df):
         return df.rename(
             columns={"#YR": "year", "BIRTHS": "births", "ASFR": "fertility_rate"}
@@ -177,7 +182,7 @@ class Loader:
         qry = f"select {sql_cols} from {table_name};"
         return pd.read_sql(qry, self._cnx)
 
-    def _join_fk(self, df, id_table, on):
+    def _join_fk(self, df, id_table, on: list):
         merged_df = df.merge(id_table, on=on, how="left")
         for col in id_table.columns:
             if "id" in col:
@@ -187,7 +192,7 @@ class Loader:
             raise ValueError(
                 f"{missing} rows in {on} failed to match with a foreign key."
             )
-        return merged_df.drop(columns=[on])
+        return merged_df.drop(columns=[col for col in on])
 
 
 class LoadCountry(Loader):
@@ -200,7 +205,7 @@ class LoadCountry(Loader):
 class LoadDemographics(Loader):
     def load(self, df, country_table):
         table_name = "demographics"
-        df = self._join_fk(df, id_table=country_table, on="country_code")
+        df = self._join_fk(df, id_table=country_table, on=["country_code"])
         self._insert(df, table_name)
 
         # Collect demo ids cols for merging to age_demographic table
@@ -216,6 +221,14 @@ class LoadAge(Loader):
         return self._read_ids(table_name, ["age_id", "age_range"])
 
 
+class LoadAgeDemographic(Loader):
+    def load(self, df, demographics_table, age_table):
+        table_name = "age_demographic"
+        df = self._join_fk(df, id_table=demographics_table, on=["year", "country_code"])
+        df = self._join_fk(df, id_table=age_table, on=["age_range"])
+        self._insert(df, table_name)
+
+
 class ETLProcessor:
     def __init__(self, cnx, data_path):
         self._cnx = cnx
@@ -223,17 +236,6 @@ class ETLProcessor:
 
     def _extract_demographics(self):
         return pd.read_csv(self._data_path, delimiter="|")
-
-    def _load_country(self, df):
-        df.to_sql("country", self._cnx, if_exists="append", index=False)
-        self._cnx.commit()
-        qry = "select country_id, country_code from country;"
-        return pd.read_sql(qry, self._cnx)
-
-    def _join_demographic_fk(self, demographics, country_table):
-        demographics = demographics.merge(country_table, on="country_code", how="left")
-        demographics = demographics.drop(columns=["country_code"])
-        return demographics
 
     def process(self):
         print("Extract...")
@@ -252,11 +254,16 @@ class ETLProcessor:
 
         print("Load...")
         country_table = LoadCountry(self._cnx).load(country)
+        print("Country table complete.")
         demographics_table = LoadDemographics(self._cnx).load(
             demographics, country_table
         )
-        print(demographics_table.head())
+        print("Demographics table complete.")
         age_table = LoadAge(self._cnx).load(age)
-        print(age_table.head())
+        print("Age table complete.")
+        LoadAgeDemographic(self._cnx).load(
+            age_demographic, demographics_table, age_table
+        )
+        print("Age_Demographic table complete.")
 
         print("Complete.")
