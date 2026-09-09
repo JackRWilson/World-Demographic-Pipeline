@@ -1,6 +1,23 @@
 import pandas as pd
 from country_mapping import country_codes
 
+age_cols = [
+    "ASFR15_19",
+    "ASFR20_24",
+    "ASFR25_29",
+    "ASFR30_34",
+    "ASFR35_39",
+    "ASFR40_44",
+    "ASFR45_49",
+    "BIRTHS15_19",
+    "BIRTHS20_24",
+    "BIRTHS25_29",
+    "BIRTHS30_34",
+    "BIRTHS35_39",
+    "BIRTHS40_44",
+    "BIRTHS45_49",
+]
+
 
 class TransformCountry:
     def transform(self, df):
@@ -110,6 +127,43 @@ class TransformAge:
         )
 
 
+class TransformAgeDemographic:
+    def transform(self, df):
+        df = self._map_country_code(df)
+        df = self._drop_extra_cols(df)
+        df = self._drop_na_rows(df)
+        df = self._convert_wide_to_long(df)
+        df = self._rename_cols(df)
+        return df
+
+    def _map_country_code(self, df):
+        df = df.copy()
+        df["country_code"] = df["GEO_ID"].str[9:11]
+        return df
+
+    def _drop_extra_cols(self, df):
+        return df[["#YR", "country_code"] + age_cols]
+
+    def _drop_na_rows(self, df):
+        return df.dropna(subset=age_cols, how="all")
+
+    def _convert_wide_to_long(self, df):
+        df["id"] = df.index
+        return pd.wide_to_long(
+            df,
+            stubnames=["BIRTHS", "ASFR"],
+            i=["#YR", "country_code", "id"],
+            j="age_range",
+            sep="",
+            suffix=r"\d+_\d+",
+        ).reset_index()
+
+    def _rename_cols(self, df):
+        return df.rename(
+            columns={"#YR": "year", "BIRTHS": "births", "ASFR": "fertility_rate"}
+        ).drop(columns=["id"])
+
+
 class ETLProcessor:
     def __init__(self, cnx, data_path):
         self._cnx = cnx
@@ -127,10 +181,12 @@ class ETLProcessor:
         country = TransformCountry().transform(df)
         demographics = TransformDemographics().transform(df)
         age = TransformAge().transform()
-        print(age.head())
+        age_demographic = TransformAgeDemographic().transform(df)
+        print(age_demographic.head())
         print(f"Country table shape: {country.shape}")
         print(f"Demographics table shape: {demographics.shape}")
         print(f"Age table shape: {age.shape}")
+        print(f"Age_Demographic table shape: {age_demographic.shape}")
 
         # print("Load...")
 
