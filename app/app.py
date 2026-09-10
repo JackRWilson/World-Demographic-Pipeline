@@ -1,6 +1,13 @@
 import os
 
+import callbacks  # noqa: F401
 from dash import Dash, dash_table, dcc, html
+from graphs import sum_pop_bar_graph
+from inputs import (
+    country_migration_dropdown,
+    country_pop_dropdown,
+    country_rate_dropdown,
+)
 
 from data import age_demo_df, age_df, country_df, demo_df
 
@@ -89,7 +96,7 @@ data_tab = dcc.Tab(
                             table="Demographics",
                             cols="demo_id, year, growth_rate, population, yearly_births, yearly_deaths, natural_increase, net_migrants, net_migration_rate, rate_natural_increase, le_at_birth, female_le_at_birth, male_le_at_birth, country_id",
                             desc="This table shows all basic demographic info by year and country.",
-                            df=demo_df[::-1].reset_index(drop=True),
+                            df=demo_df,
                         ),
                         render_table(
                             table="Age_Demographic",
@@ -104,6 +111,41 @@ data_tab = dcc.Tab(
     ],
 )
 
+pop_tab = dcc.Tab(
+    label="Population Analysis",
+    children=[
+        html.Section(
+            [
+                html.H2("Question"),
+                html.P(
+                    "Are population increases due more to immigration or natural increase?"
+                ),
+                html.Br(),
+                html.H2("Figure 1"),
+                html.H4("Country selector:"),
+                country_pop_dropdown(),
+                dcc.Graph(id="output-pop-line-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 2"),
+                dcc.Graph(figure=sum_pop_bar_graph()),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 3"),
+                html.H4("Country selector:"),
+                country_migration_dropdown(),
+                dcc.Graph(id="output-natinc-migration-line-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 4"),
+                country_rate_dropdown(),
+                dcc.Graph(id="output-natinc-migration-rate-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+            ]
+        )
+    ],
+)
 
 app.layout = html.Div(
     [
@@ -111,7 +153,7 @@ app.layout = html.Div(
             [html.H1("World Demographic Data Analysis")],
             style={"fontFamily": "Helvetica", "textAlign": "center"},
         ),
-        html.Section(dcc.Tabs([data_tab]), style={"fontFamily": "Helvetica"}),
+        html.Section(dcc.Tabs([pop_tab]), style={"fontFamily": "Helvetica"}),
     ],
     style={"paddingLeft": "40px", "paddingRight": "40px"},
 )

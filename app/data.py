@@ -12,6 +12,12 @@ def extract_data(table_name, engine):
     return pd.read_sql(f"select * from {table_name};", engine)
 
 
+def get_filtered_countries(df, countries):
+    if isinstance(countries, str):
+        countries = [countries]
+    return df[df["country_name"].isin(countries)]
+
+
 engine = build_engine()
 
 country_df = extract_data("country", engine)
