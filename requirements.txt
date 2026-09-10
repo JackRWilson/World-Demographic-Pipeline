@@ -3,3 +3,7 @@ dynaconf
 psycopg
 psycopg[binary, pool]
 SQLAlchemy
+dash
+dash_daq
+statsmodels
+python-dotenv
