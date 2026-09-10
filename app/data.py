@@ -2,6 +2,12 @@ import pandas as pd
 from dynaconf import Dynaconf
 from sqlalchemy import create_engine
 
+major_recessions = {
+    "1981-1982 Recession": [1981, 1982],
+    "Great Recession": [2007, 2008, 2009],
+    "COVID-19 Recession": [2020],
+}
+
 
 def build_engine():
     settings = Dynaconf(envvar_prefix="DB", load_dotenv=True, dotenv_override=True)
@@ -16,6 +22,13 @@ def get_filtered_countries(df, countries):
     if isinstance(countries, str):
         countries = [countries]
     return df[df["country_name"].isin(countries)]
+
+
+def get_filtered_recession_years(df, recession, additional_years=3):
+    years = major_recessions[recession]
+    start = min(years)
+    end = max(years)
+    return df[df["year"].between(start - additional_years, end + additional_years)]
 
 
 engine = build_engine()

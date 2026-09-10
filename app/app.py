@@ -2,14 +2,20 @@ import os
 
 import callbacks  # noqa: F401
 from dash import Dash, dash_table, dcc, html
-from graphs import sum_pop_bar_graph
+from graphs import pop_natinc_scatter, sum_pop_bar_graph
 from inputs import (
     country_migration_dropdown,
     country_pop_dropdown,
     country_rate_dropdown,
+    gr_count_picker,
+    gr_recession_picker,
+    le_metric_picker,
+    le_recession_picker,
+    natinc_recession_picker,
+    pop_recession_picker,
 )
 
-from data import age_demo_df, age_df, country_df, demo_df
+from data import age_demo_df, age_df, country_df, demo_df, major_recessions
 
 app = Dash(__name__)
 server = app.server
@@ -124,7 +130,7 @@ pop_tab = dcc.Tab(
                 html.H2("Figure 1"),
                 html.H4("Country selector:"),
                 country_pop_dropdown(),
-                dcc.Graph(id="output-pop-line-graph"),
+                dcc.Graph(id="output-pop-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
                 html.H2("Figure 2"),
@@ -134,12 +140,100 @@ pop_tab = dcc.Tab(
                 html.H2("Figure 3"),
                 html.H4("Country selector:"),
                 country_migration_dropdown(),
-                dcc.Graph(id="output-natinc-migration-line-graph"),
+                dcc.Graph(id="output-natinc-migration-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
                 html.H2("Figure 4"),
+                html.H4("Country selector:"),
                 country_rate_dropdown(),
                 dcc.Graph(id="output-natinc-migration-rate-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 5"),
+                dcc.Graph(figure=pop_natinc_scatter()),
+                html.P("Describe trend"),
+                html.Br(),
+            ]
+        )
+    ],
+)
+
+
+recession_tab = dcc.Tab(
+    label="Recession Analysis",
+    children=[
+        html.Section(
+            [
+                html.H2("Question"),
+                html.P(
+                    "How does Covid / Recession effect population, birth rates, life expectancy?"
+                ),
+                html.H4("Major Recessions"),
+                *[
+                    html.P(
+                        f"{name}: {years[0]}{f'-{years[-1]}' if len(years) > 1 else ''}"
+                    )
+                    for name, years in major_recessions.items()
+                ],
+                html.Br(),
+                html.H2("Figure 1 & 2"),
+                html.H4("Recession selector:"),
+                pop_recession_picker(),
+                dcc.Graph(id="output-rec-pop-bar-graph"),
+                html.P("Describe trend"),
+                dcc.Graph(id="output-us-rec-pop-bar-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 3"),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H4("Recession selector:"),
+                                le_recession_picker(),
+                            ],
+                            style={"flex": "1"},
+                        ),
+                        html.Div(
+                            [
+                                html.H4("Metric selector:"),
+                                le_metric_picker(),
+                            ],
+                            style={"flex": "1"},
+                        ),
+                    ],
+                    style={"display": "flex", "gap": "20px"},
+                ),
+                dcc.Graph(id="output-le-bar-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 4"),
+                html.H4("Recession selector:"),
+                natinc_recession_picker(),
+                dcc.Graph(id="output-rec-natinc-bar-graph"),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 5"),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H4("Recession selector:"),
+                                gr_recession_picker(),
+                            ],
+                            style={"flex": "1"},
+                        ),
+                        html.Div(
+                            [
+                                html.H4("Count selector:"),
+                                gr_count_picker(),
+                            ],
+                            style={"flex": "1"},
+                        ),
+                    ],
+                    style={"display": "flex", "gap": "20px"},
+                ),
+                dcc.Graph(id="output-rec-gr-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
             ]
@@ -153,7 +247,7 @@ app.layout = html.Div(
             [html.H1("World Demographic Data Analysis")],
             style={"fontFamily": "Helvetica", "textAlign": "center"},
         ),
-        html.Section(dcc.Tabs([pop_tab]), style={"fontFamily": "Helvetica"}),
+        html.Section(dcc.Tabs([recession_tab]), style={"fontFamily": "Helvetica"}),
     ],
     style={"paddingLeft": "40px", "paddingRight": "40px"},
 )
