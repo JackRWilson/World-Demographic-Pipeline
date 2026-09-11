@@ -2,6 +2,8 @@ import plotly.express as px
 from dash import Input, Output, callback
 
 from data import (
+    age_demo_df,
+    age_df,
     country_df,
     demo_df,
     get_filtered_countries,
@@ -21,10 +23,10 @@ def update_pop_bar_graph(selected_countries):
     if selected_countries is None:
         selected_countries = "United States"
 
-    filtered_countries = get_filtered_countries(df, selected_countries)
+    df = get_filtered_countries(df, selected_countries)
 
     return px.bar(
-        filtered_countries,
+        df,
         x="year",
         y="population",
         color="country_name",
@@ -46,9 +48,9 @@ def update_natinc_migration_bar_graph(selected_country):
     if selected_country is None:
         selected_country = "United States"
 
-    filtered_countries = get_filtered_countries(df, selected_country)
+    df = get_filtered_countries(df, selected_country)
 
-    df = filtered_countries.rename(
+    df = df.rename(
         columns={
             "net_migrants": "Net Migrants",
             "natural_increase": "Natural Increase",
@@ -75,12 +77,12 @@ def update_natinc_migration_bar_graph(selected_country):
     ),
     Input(component_id="input-country-rate-dropdown", component_property="value"),
 )
-def update_sum_standardized_natinc_vs_migration_graph(country):
+def update_sum_standardized_natinc_vs_migration_graph(selected_country):
     df = demo_df.merge(country_df, on="country_id", how="left")
-    if country is None:
-        country = [c for c in country_df["country_name"].unique()]
+    if selected_country is None:
+        selected_country = [c for c in country_df["country_name"].unique()]
 
-    df = get_filtered_countries(df, country)
+    df = get_filtered_countries(df, selected_country)
     df["rate_natural_increase_per_1000"] = df["rate_natural_increase"] * 10
     df = df.groupby("year", as_index=False)[
         ["net_migration_rate", "rate_natural_increase_per_1000"]
@@ -118,14 +120,14 @@ def update_rec_pop_bar_graph(selected_recession):
     if selected_recession is None:
         selected_recession = list(major_recessions)[2]
 
-    filtered_years = get_filtered_recession_years(df, selected_recession)
+    df = get_filtered_recession_years(df, selected_recession)
     recession_years = major_recessions[selected_recession]
-    filtered_years["period"] = filtered_years["year"].apply(
+    df["period"] = df["year"].apply(
         lambda year: "Recession" if year in recession_years else "Before/After"
     )
 
     fig = px.bar(
-        filtered_years,
+        df,
         x="year",
         y="growth",
         color="period",
@@ -150,14 +152,14 @@ def update_us_rec_pop_bar_graph(selected_recession):
     if selected_recession is None:
         selected_recession = list(major_recessions)[2]
 
-    filtered_years = get_filtered_recession_years(df, selected_recession)
+    df = get_filtered_recession_years(df, selected_recession)
     recession_years = major_recessions[selected_recession]
-    filtered_years["period"] = filtered_years["year"].apply(
+    df["period"] = df["year"].apply(
         lambda year: "Recession" if year in recession_years else "Before/After"
     )
 
     fig = px.bar(
-        filtered_years,
+        df,
         x="year",
         y="growth",
         color="period",
@@ -182,9 +184,9 @@ def update_rec_le_bar_graph(selected_recession, selected_metric):
     if selected_recession is None:
         selected_recession = list(major_recessions)[2]
 
-    filtered_years = get_filtered_recession_years(df, selected_recession)
+    df = get_filtered_recession_years(df, selected_recession)
     recession_years = major_recessions[selected_recession]
-    filtered_years["period"] = filtered_years["year"].apply(
+    df["period"] = df["year"].apply(
         lambda year: "Recession" if year in recession_years else "Before/After"
     )
 
@@ -195,7 +197,7 @@ def update_rec_le_bar_graph(selected_recession, selected_metric):
     }
 
     fig = px.bar(
-        filtered_years,
+        df,
         x="year",
         y=selected_metric,
         color="period",
@@ -219,9 +221,9 @@ def update_rec_natinc_bar_graph(selected_recession):
     if selected_recession is None:
         selected_recession = list(major_recessions)[2]
 
-    filtered_years = get_filtered_recession_years(df, selected_recession)
+    df = get_filtered_recession_years(df, selected_recession)
 
-    filtered_years = filtered_years.rename(
+    df = df.rename(
         columns={
             "yearly_births": "Births",
             "yearly_deaths": "Deaths",
@@ -230,7 +232,7 @@ def update_rec_natinc_bar_graph(selected_recession):
     )
 
     fig = px.bar(
-        filtered_years,
+        df,
         x="year",
         y=["Births", "Deaths", "Increase"],
         barmode="group",
@@ -260,25 +262,21 @@ def update_rec_gr_bar_graph(selected_recession, selected_count):
     if selected_recession is None:
         selected_recession = list(major_recessions)[2]
 
-    filtered_years = get_filtered_recession_years(
-        df, selected_recession, additional_years=0
-    )
-    filtered_years = filtered_years.groupby(
-        ["country_name", "country_code"], as_index=False
-    )["growth_rate"].mean()
-    filtered_years = filtered_years.rename(columns={"growth_rate": "Growth Rate"})
+    df = get_filtered_recession_years(df, selected_recession, additional_years=0)
+    df = df.groupby(["country_name", "country_code"], as_index=False)[
+        "growth_rate"
+    ].mean()
+    df = df.rename(columns={"growth_rate": "Growth Rate"})
 
     ascending = "bottom" in selected_count
     n = 50 if "50" in selected_count else 10
 
-    filtered_years = filtered_years.sort_values(
-        "Growth Rate", ascending=ascending
-    ).head(n)
+    df = df.sort_values("Growth Rate", ascending=ascending).head(n)
 
     x_axis = "country_code" if n == 50 else "country_name"
 
     return px.bar(
-        filtered_years,
+        df,
         x=x_axis,
         y="Growth Rate",
         labels={
@@ -288,4 +286,34 @@ def update_rec_gr_bar_graph(selected_recession, selected_count):
         },
         hover_name="country_name",
         title=f"Population Growth Rate During the {selected_recession}",
+    )
+
+
+# Birth age tab - fig 1
+@callback(
+    Output(component_id="output-fr-line-graph", component_property="figure"),
+    Input(component_id="input-country-fr-dropdown", component_property="value"),
+)
+def update_fr_line_graph(selected_country):
+    df = age_demo_df.merge(demo_df, on="demo_id", how="left")
+    df = df.merge(age_df, on="age_id", how="left")
+    df = df.merge(country_df, on="country_id", how="left")
+    df = df[["year", "country_name", "age_range", "fertility_rate"]]
+
+    if selected_country is None:
+        selected_country = "United States"
+
+    df = get_filtered_countries(df, selected_country)
+
+    return px.line(
+        df,
+        x="year",
+        y="fertility_rate",
+        color="age_range",
+        labels={
+            "year": "Year",
+            "fertility_rate": "Fertility Rate",
+            "age_range": "Age Group",
+        },
+        title="Fertility Rate by Age Group Over Time",
     )

@@ -8,6 +8,16 @@ major_recessions = {
     "COVID-19 Recession": [2020],
 }
 
+age_midpoints = {
+    "15-19": 17,
+    "20-24": 22,
+    "25-29": 27,
+    "30-34": 32,
+    "35-39": 37,
+    "40-44": 42,
+    "45-49": 47,
+}
+
 
 def build_engine():
     settings = Dynaconf(envvar_prefix="DB", load_dotenv=True, dotenv_override=True)

@@ -2,8 +2,15 @@ import os
 
 import callbacks  # noqa: F401
 from dash import Dash, dash_table, dcc, html
-from graphs import pop_natinc_scatter, sum_pop_bar_graph
+from graphs import (
+    avg_age_childbirth_graph,
+    birth_percent_bar_graph,
+    fr_combined_line_graph,
+    pop_natinc_scatter,
+    sum_pop_bar_graph,
+)
 from inputs import (
+    country_fr_dropdown,
     country_migration_dropdown,
     country_pop_dropdown,
     country_rate_dropdown,
@@ -241,13 +248,43 @@ recession_tab = dcc.Tab(
     ],
 )
 
+birth_age_tab = dcc.Tab(
+    label="Birth Age Analysis",
+    children=[
+        html.Section(
+            [
+                html.H2("Question"),
+                html.P(
+                    "How has the age at which women have children changed over time?"
+                ),
+                html.Br(),
+                html.H2("Figure 1 & 2"),
+                country_fr_dropdown(),
+                dcc.Graph(id="output-fr-line-graph"),
+                html.P("Describe trend"),
+                dcc.Graph(figure=fr_combined_line_graph()),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 3"),
+                dcc.Graph(figure=birth_percent_bar_graph()),
+                html.P("Describe trend"),
+                html.Br(),
+                html.H2("Figure 4"),
+                dcc.Graph(figure=avg_age_childbirth_graph()),
+                html.P("Describe trend"),
+                html.Br(),
+            ]
+        )
+    ],
+)
+
 app.layout = html.Div(
     [
         html.Section(
             [html.H1("World Demographic Data Analysis")],
             style={"fontFamily": "Helvetica", "textAlign": "center"},
         ),
-        html.Section(dcc.Tabs([recession_tab]), style={"fontFamily": "Helvetica"}),
+        html.Section(dcc.Tabs([birth_age_tab]), style={"fontFamily": "Helvetica"}),
     ],
     style={"paddingLeft": "40px", "paddingRight": "40px"},
 )

@@ -43,6 +43,19 @@ def country_rate_dropdown():
     )
 
 
+def country_fr_dropdown():
+    return dcc.Dropdown(
+        [
+            {"label": name, "value": name}
+            for name in country_df["country_name"].unique()
+        ],
+        value=["United States"],
+        id="input-country-fr-dropdown",
+        placeholder="Select Country",
+        style={"width": "250px"},
+    )
+
+
 def pop_recession_picker():
     return dcc.RadioItems(
         options=[{"label": name, "value": name} for name in major_recessions],
@@ -110,6 +123,7 @@ def le_metric_picker():
             "cursor": "pointer",
         },
     )
+
 
 def gr_count_picker():
     return dcc.RadioItems(
