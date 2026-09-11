@@ -21,7 +21,8 @@ age_cols = [
 
 class ExtractDemographicData:
     def extract(self, data_path):
-        return pd.read_csv(data_path, delimiter="|")
+        df = pd.read_csv(data_path, delimiter="|")
+        return df[df["GEO_ID"].str.len() == 11].copy()
 
 
 class TransformCountry:
