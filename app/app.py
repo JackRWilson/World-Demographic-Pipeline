@@ -249,7 +249,7 @@ recession_tab = dcc.Tab(
                 html.Br(),
                 html.H2("Question", style=figure_style),
                 html.P(
-                    "How does Covid / Recession effect population, birth rates, life expectancy?"
+                    "How does Covid / Recession affect population, birth rates, life expectancy?"
                 ),
                 html.P(
                     [
@@ -318,7 +318,7 @@ recession_tab = dcc.Tab(
                 dcc.Graph(id="output-rec-natinc-bar-graph"),
                 html.P(
                     """This graph shows the same +3 years -3 years time window around the
-                       recession, but is clustered into total births/deaths/increase. This lets
+                       recession but is clustered into total births/deaths/increase. This lets
                        us see how each variable was impacted by the recession. The Great 
                        Recession had little impact on any of these metrics, while COVID and the
                        1981-1982 Recessions saw a slight dip in births. Most other variable 
@@ -356,7 +356,7 @@ recession_tab = dcc.Tab(
                 html.P(
                     """This map shows the same data from before but across the whole globe
                        and is a better visualization of regional impact. The COVID Recession 
-                       impacted the whole globe, but many of the counties in Africa still had
+                       impacted the whole globe, but many of the countries in Africa still had
                        a high population growth, showing it may not have impacted them as much."""
                 ),
                 html.Br(),

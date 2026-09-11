@@ -5,7 +5,6 @@
 /data/
 
 # Plan
-plan.md
 testing.ipynb
 
 # ETL
@@ -13,5 +12,4 @@ testing.ipynb
 /etl/__pycache__
 
 # App
-/app/app_layout.png
 /app/__pycache__
