@@ -18,7 +18,6 @@ from data import (
     Input(component_id="input-country-pop-dropdown", component_property="value"),
 )
 def update_pop_bar_graph(selected_countries):
-
     df = demo_df.merge(country_df, on="country_id", how="left")
     if selected_countries is None:
         selected_countries = "United States"
@@ -43,7 +42,6 @@ def update_pop_bar_graph(selected_countries):
     Input(component_id="input-country-migration-dropdown", component_property="value"),
 )
 def update_natinc_migration_bar_graph(selected_country):
-
     df = demo_df.merge(country_df, on="country_id", how="left")
     if selected_country is None:
         selected_country = "United States"

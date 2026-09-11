@@ -39,7 +39,7 @@ data_table_settings = {
         "fontSize": "14px",
     },
     "style_header": {
-        "backgroundColor": "#E4E4E4",
+        "backgroundColor": "#BDBDBD",
         "fontWeight": "bold",
         "fontFamily": "Helvetica",
         "fontSize": "15px",
@@ -47,7 +47,7 @@ data_table_settings = {
     "style_data_conditional": [
         {
             "if": {"row_index": "odd"},
-            "backgroundColor": "#E4E4E4",
+            "backgroundColor": "#D3D3D3",
         },
         {
             "if": {"row_index": "even"},
@@ -55,6 +55,10 @@ data_table_settings = {
         },
     ],
 }
+
+figure_style = {"padding": "16px 8px", "backgroundColor": "#777777", "color": "white"}
+tab_style = {"backgroundColor": "#777777", "color": "white", "fontSize": "20px"}
+tab_selected_style = {"backgroundColor": "#6082B6", "color": "white"}
 
 
 def render_table(table, cols, desc, df):
@@ -81,7 +85,8 @@ data_tab = dcc.Tab(
     children=[
         html.Section(
             [
-                html.H2("Raw Data"),
+                html.Br(),
+                html.H2("Raw Data", style=figure_style),
                 html.Section(
                     [
                         html.A(
@@ -90,7 +95,8 @@ data_tab = dcc.Tab(
                         )
                     ]
                 ),
-                html.H2("Tables"),
+                html.Br(),
+                html.H2("Tables", style=figure_style),
                 html.Section(
                     [
                         render_table(
@@ -102,7 +108,7 @@ data_tab = dcc.Tab(
                         render_table(
                             table="Age",
                             cols="age_id, age_range",
-                            desc="This age ranges with their IDs for joining with other tables.",
+                            desc="This table has age ranges with their IDs for joining with other tables.",
                             df=age_df,
                         ),
                         render_table(
@@ -122,6 +128,8 @@ data_tab = dcc.Tab(
             ]
         )
     ],
+    style=tab_style,
+    selected_style=tab_selected_style,
 )
 
 pop_tab = dcc.Tab(
@@ -129,40 +137,43 @@ pop_tab = dcc.Tab(
     children=[
         html.Section(
             [
-                html.H2("Question"),
+                html.Br(),
+                html.H2("Question", style=figure_style),
                 html.P(
                     "Are population increases due more to immigration or natural increase?"
                 ),
                 html.Br(),
-                html.H2("Figure 1"),
+                html.H2("Figure 1", style=figure_style),
                 html.H4("Country selector:"),
                 country_pop_dropdown(),
                 dcc.Graph(id="output-pop-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 2"),
+                html.H2("Figure 2", style=figure_style),
                 dcc.Graph(figure=sum_pop_bar_graph()),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 3"),
+                html.H2("Figure 3", style=figure_style),
                 html.H4("Country selector:"),
                 country_migration_dropdown(),
                 dcc.Graph(id="output-natinc-migration-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 4"),
+                html.H2("Figure 4", style=figure_style),
                 html.H4("Country selector:"),
                 country_rate_dropdown(),
                 dcc.Graph(id="output-natinc-migration-rate-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 5"),
+                html.H2("Figure 5", style=figure_style),
                 dcc.Graph(figure=pop_natinc_scatter()),
                 html.P("Describe trend"),
                 html.Br(),
             ]
         )
     ],
+    style=tab_style,
+    selected_style=tab_selected_style,
 )
 
 
@@ -171,7 +182,8 @@ recession_tab = dcc.Tab(
     children=[
         html.Section(
             [
-                html.H2("Question"),
+                html.Br(),
+                html.H2("Question", style=figure_style),
                 html.P(
                     "How does Covid / Recession effect population, birth rates, life expectancy?"
                 ),
@@ -183,7 +195,7 @@ recession_tab = dcc.Tab(
                     for name, years in major_recessions.items()
                 ],
                 html.Br(),
-                html.H2("Figure 1 & 2"),
+                html.H2("Figure 1 & 2", style=figure_style),
                 html.H4("Recession selector:"),
                 pop_recession_picker(),
                 dcc.Graph(id="output-rec-pop-bar-graph"),
@@ -191,7 +203,7 @@ recession_tab = dcc.Tab(
                 dcc.Graph(id="output-us-rec-pop-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 3"),
+                html.H2("Figure 3", style=figure_style),
                 html.Div(
                     [
                         html.Div(
@@ -214,13 +226,13 @@ recession_tab = dcc.Tab(
                 dcc.Graph(id="output-le-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 4"),
+                html.H2("Figure 4", style=figure_style),
                 html.H4("Recession selector:"),
                 natinc_recession_picker(),
                 dcc.Graph(id="output-rec-natinc-bar-graph"),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 5"),
+                html.H2("Figure 5", style=figure_style),
                 html.Div(
                     [
                         html.Div(
@@ -246,6 +258,8 @@ recession_tab = dcc.Tab(
             ]
         )
     ],
+    style=tab_style,
+    selected_style=tab_selected_style,
 )
 
 birth_age_tab = dcc.Tab(
@@ -253,38 +267,46 @@ birth_age_tab = dcc.Tab(
     children=[
         html.Section(
             [
-                html.H2("Question"),
+                html.Br(),
+                html.H2("Question", style=figure_style),
                 html.P(
                     "How has the age at which women have children changed over time?"
                 ),
                 html.Br(),
-                html.H2("Figure 1 & 2"),
+                html.H2("Figure 1 & 2", style=figure_style),
                 country_fr_dropdown(),
                 dcc.Graph(id="output-fr-line-graph"),
                 html.P("Describe trend"),
                 dcc.Graph(figure=fr_combined_line_graph()),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 3"),
+                html.H2("Figure 3", style=figure_style),
                 dcc.Graph(figure=birth_percent_bar_graph()),
                 html.P("Describe trend"),
                 html.Br(),
-                html.H2("Figure 4"),
+                html.H2("Figure 4", style=figure_style),
                 dcc.Graph(figure=avg_age_childbirth_graph()),
                 html.P("Describe trend"),
                 html.Br(),
             ]
         )
     ],
+    style=tab_style,
+    selected_style=tab_selected_style,
 )
 
 app.layout = html.Div(
     [
+        html.Br(),
         html.Section(
             [html.H1("World Demographic Data Analysis")],
             style={"fontFamily": "Helvetica", "textAlign": "center"},
         ),
-        html.Section(dcc.Tabs([birth_age_tab]), style={"fontFamily": "Helvetica"}),
+        html.Br(),
+        html.Section(
+            dcc.Tabs([data_tab, pop_tab, recession_tab, birth_age_tab]),
+            style={"fontFamily": "Helvetica"},
+        ),
     ],
     style={"paddingLeft": "40px", "paddingRight": "40px"},
 )
