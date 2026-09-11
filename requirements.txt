@@ -7,3 +7,4 @@ dash
 dash_daq
 statsmodels
 python-dotenv
+pycountry-convert

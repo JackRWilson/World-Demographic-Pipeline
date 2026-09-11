@@ -20,7 +20,7 @@ from data import (
 def update_pop_bar_graph(selected_countries):
     df = demo_df.merge(country_df, on="country_id", how="left")
     if selected_countries is None:
-        selected_countries = "United States"
+        selected_countries = ["United States"]
 
     df = get_filtered_countries(df, selected_countries)
 
@@ -104,6 +104,62 @@ def update_sum_standardized_natinc_vs_migration_graph(selected_country):
         },
         title="Total Net Migration and Natural Increase Rates Over Time",
     )
+
+
+# Pop tab - fig 6
+@callback(
+    Output(component_id="input-corr-matrix-value-picker", component_property="options"),
+    Output(component_id="input-corr-matrix-value-picker", component_property="value"),
+    Input(component_id="input-corr-matrix-mode-picker", component_property="value"),
+)
+def update_corr_matrix_geo_options(mode):
+    if mode == "continent":
+        options = [
+            {"label": continent, "value": continent}
+            for continent in sorted(country_df["continent"].unique())
+        ]
+        default = "North America"
+    else:
+        options = [
+            {"label": country, "value": country}
+            for country in sorted(country_df["country_name"].unique())
+        ]
+        default = "United States"
+    return options, default
+
+
+# Pop tab - fig 6
+@callback(
+    Output(component_id="output-pop-natinc-corr-matrix", component_property="figure"),
+    Input(component_id="input-corr-matrix-mode-picker", component_property="value"),
+    Input(component_id="input-corr-matrix-value-picker", component_property="value"),
+)
+def pop_natinc_corr_matrix(mode, selected_value):
+    df = demo_df.merge(country_df, on="country_id", how="left")
+
+    df = df[df[mode] == selected_value]
+    df = df.rename(
+        columns={
+            "natural_increase": "Net Natural Increase",
+            "net_migrants": "Net Migrants",
+        }
+    )
+    corr_matrix = df[["Net Natural Increase", "Net Migrants"]].corr()
+
+    fig = px.imshow(
+        corr_matrix,
+        text_auto=".2f",
+        color_continuous_scale="RdBu",
+        zmin=-1,
+        zmax=1,
+        labels={
+            "x": "",
+            "y": "",
+            "color": "Correlation",
+        },
+        title="Correlation Between Natural Increase and Net Migration",
+    )
+    return fig
 
 
 # Recession tab - fig 1
@@ -285,6 +341,46 @@ def update_rec_gr_bar_graph(selected_recession, selected_count):
         hover_name="country_name",
         title=f"Population Growth Rate During the {selected_recession}",
     )
+
+
+# Recession tab - fig 6
+@callback(
+    Output(component_id="output-rec-gr-map", component_property="figure"),
+    Input(component_id="input-rec-gr-picker", component_property="value"),
+)
+def update_rec_gr_map(selected_recession):
+    df = demo_df.merge(country_df, on="country_id", how="left")
+    df = df.groupby(["year", "country_name", "country_code"], as_index=False)[
+        "growth_rate"
+    ].mean()
+
+    if selected_recession is None:
+        selected_recession = list(major_recessions)[2]
+
+    df = get_filtered_recession_years(df, selected_recession, additional_years=0)
+    df = df.groupby(["country_name", "country_code"], as_index=False)[
+        "growth_rate"
+    ].mean()
+    df = df.rename(columns={"growth_rate": "Growth Rate"})
+
+    fig = px.choropleth(
+        df,
+        locations="country_name",
+        locationmode="country names",
+        color="Growth Rate",
+        hover_name="country_name",
+        projection="natural earth",
+        title=f"Population Growth Rate by Country During the {selected_recession}",
+    )
+    fig.update_geos(
+        fitbounds="locations",
+        visible=True,
+        showcountries=True,
+        countrycolor="white",
+        landcolor="lightgray",
+    )
+    fig.update_layout(height=800)
+    return fig
 
 
 # Birth age tab - fig 1

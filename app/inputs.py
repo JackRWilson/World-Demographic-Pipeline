@@ -3,13 +3,14 @@ from dash import dcc
 from data import country_df, major_recessions
 
 
+# Population tab - fig 1
 def country_pop_dropdown():
     return dcc.Dropdown(
         [
             {"label": name, "value": name}
             for name in country_df["country_name"].unique()
         ],
-        value=["United States"],
+        value=["United States", "Pakistan", "Nigeria", "Japan", "United Kingdom"],
         id="input-country-pop-dropdown",
         multi=True,
         placeholder="Select Countries",
@@ -17,6 +18,7 @@ def country_pop_dropdown():
     )
 
 
+# Population tab - fig 3
 def country_migration_dropdown():
     return dcc.Dropdown(
         [
@@ -30,6 +32,7 @@ def country_migration_dropdown():
     )
 
 
+# Population tab - fig 4
 def country_rate_dropdown():
     return dcc.Dropdown(
         [
@@ -43,19 +46,25 @@ def country_rate_dropdown():
     )
 
 
-def country_fr_dropdown():
-    return dcc.Dropdown(
-        [
-            {"label": name, "value": name}
-            for name in country_df["country_name"].unique()
+# Pop tab - fig 6
+def corr_matrix_mode_picker():
+    return dcc.RadioItems(
+        id="input-corr-matrix-mode-picker",
+        options=[
+            {"label": "By Country", "value": "country_name"},
+            {"label": "By Continent", "value": "continent"},
         ],
-        value=["United States"],
-        id="input-country-fr-dropdown",
-        placeholder="Select Country",
-        style={"width": "250px"},
+        value="continent",
+        inline=True,
     )
 
 
+# Pop tab - fig 6
+def corr_matrix_value_picker():
+    return dcc.Dropdown(id="input-corr-matrix-value-picker", value="North America")
+
+
+# Recession tab - fig 1 & 2
 def pop_recession_picker():
     return dcc.RadioItems(
         options=[{"label": name, "value": name} for name in major_recessions],
@@ -69,6 +78,7 @@ def pop_recession_picker():
     )
 
 
+# Recession tab - fig 3
 def le_recession_picker():
     return dcc.RadioItems(
         options=[{"label": name, "value": name} for name in major_recessions],
@@ -82,32 +92,7 @@ def le_recession_picker():
     )
 
 
-def natinc_recession_picker():
-    return dcc.RadioItems(
-        options=[{"label": name, "value": name} for name in major_recessions],
-        value=list(major_recessions)[2],
-        id="input-rec-natinc-picker",
-        inline=True,
-        labelStyle={
-            "display": "inline-block",
-            "cursor": "pointer",
-        },
-    )
-
-
-def gr_recession_picker():
-    return dcc.RadioItems(
-        options=[{"label": name, "value": name} for name in major_recessions],
-        value=list(major_recessions)[2],
-        id="input-rec-gr-picker",
-        inline=True,
-        labelStyle={
-            "display": "inline-block",
-            "cursor": "pointer",
-        },
-    )
-
-
+# Recession tab - fig 3
 def le_metric_picker():
     return dcc.RadioItems(
         id="input-le-metric-picker",
@@ -125,6 +110,35 @@ def le_metric_picker():
     )
 
 
+# Recession tab - fig 4
+def natinc_recession_picker():
+    return dcc.RadioItems(
+        options=[{"label": name, "value": name} for name in major_recessions],
+        value=list(major_recessions)[2],
+        id="input-rec-natinc-picker",
+        inline=True,
+        labelStyle={
+            "display": "inline-block",
+            "cursor": "pointer",
+        },
+    )
+
+
+# Recession tab - fig 5 & 6
+def gr_recession_picker():
+    return dcc.RadioItems(
+        options=[{"label": name, "value": name} for name in major_recessions],
+        value=list(major_recessions)[2],
+        id="input-rec-gr-picker",
+        inline=True,
+        labelStyle={
+            "display": "inline-block",
+            "cursor": "pointer",
+        },
+    )
+
+
+# Recession tab - fig 5
 def gr_count_picker():
     return dcc.RadioItems(
         id="input-gr-count-picker",
@@ -136,4 +150,18 @@ def gr_count_picker():
         ],
         value="top10",
         inline=True,
+    )
+
+
+# Birth age tab - fig 1
+def country_fr_dropdown():
+    return dcc.Dropdown(
+        [
+            {"label": name, "value": name}
+            for name in country_df["country_name"].unique()
+        ],
+        value=["China"],
+        id="input-country-fr-dropdown",
+        placeholder="Select Country",
+        style={"width": "250px"},
     )

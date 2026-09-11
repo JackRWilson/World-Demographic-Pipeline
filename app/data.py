@@ -1,4 +1,5 @@
 import pandas as pd
+import pycountry_convert as pc
 from dynaconf import Dynaconf
 from sqlalchemy import create_engine
 
@@ -16,6 +17,22 @@ age_midpoints = {
     "35-39": 37,
     "40-44": 42,
     "45-49": 47,
+}
+
+continent_names = {
+    "AF": "Africa",
+    "AS": "Asia",
+    "EU": "Europe",
+    "NA": "North America",
+    "OC": "Oceania",
+    "SA": "South America",
+}
+
+country_continents_mapping = {
+    "SX": "NA",
+    "TL": "AS",
+    "XG": "AS",
+    "XW": "AS",
 }
 
 
@@ -41,9 +58,26 @@ def get_filtered_recession_years(df, recession, additional_years=3):
     return df[df["year"].between(start - additional_years, end + additional_years)]
 
 
+def get_continent(country_code):
+    try:
+        if isinstance(country_code, str) and len(country_code) == 2:
+            alpha2_code = country_code
+        else:
+            alpha2_code = pc.country_name_to_country_alpha2(country_code)
+
+        if alpha2_code in country_continents_mapping:
+            continent_code = country_continents_mapping[alpha2_code]
+        else:
+            continent_code = pc.country_alpha2_to_continent_code(alpha2_code)
+        return continent_names.get(continent_code, "Unknown")
+    except (KeyError, ValueError):
+        return "Unknown"
+
+
 engine = build_engine()
 
 country_df = extract_data("country", engine)
+country_df["continent"] = country_df["country_code"].apply(get_continent)
 age_df = extract_data("age", engine)
 demo_df = extract_data("demographics", engine)
 age_demo_df = extract_data("age_demographic", engine)
