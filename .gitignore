@@ -1,15 +1,13 @@
-# Venv
+# Python
 .venv/
+__pycache__/
+*.py[cod]
 
-# Data
-/data/
-
-# Plan
+# Local configuration and source data
+.env
+/data/idb5yr.txt
+/data/idbsingleyear.txt
 testing.ipynb
 
-# ETL
-.env
-/etl/__pycache__
-
-# App
-/app/__pycache__
+# Test and tooling caches
+.pytest_cache/

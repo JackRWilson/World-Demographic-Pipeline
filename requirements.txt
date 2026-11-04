@@ -1,10 +1,8 @@
 pandas
 dynaconf
-psycopg
-psycopg[binary, pool]
+psycopg[binary,pool]
 SQLAlchemy
 dash
-dash_daq
-statsmodels
+plotly
 python-dotenv
 pycountry-convert
