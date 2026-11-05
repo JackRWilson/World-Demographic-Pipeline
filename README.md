@@ -51,8 +51,6 @@ The project explores three questions:
 └── requirements.txt
 ```
 
-Place the IDB 5-year pipe-delimited data file at `data/idb5yr.txt`.
-
 ## Setup
 
 ### Prerequisites
