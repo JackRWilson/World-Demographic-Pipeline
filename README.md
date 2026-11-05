@@ -6,8 +6,6 @@ Python ETL pipeline loads selected IDB fields into PostgreSQL, and a Dash applic
 **This is an overview.** Analysis and its figures are available in the
 [project report](docs/report.md).
 
-![Dashboard layout](docs/assets/figure-15-data-tab.png)
-
 ## Questions & Takeaways
 
 The project explores three questions:
